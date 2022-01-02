@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+# Paths
+/named_pipes/.vs
+/named_pipes/Debug
