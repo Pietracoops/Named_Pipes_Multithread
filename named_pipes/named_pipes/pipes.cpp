@@ -23,26 +23,13 @@ Pipes_Server::Pipes_Server()
 	hPipe = INVALID_HANDLE_VALUE;
 	hThread = NULL;
 
-	//tPkg = (Thread_Package*)HeapAlloc(hHeap, 0, sizeof(HANDLE) + sizeof(std::string));
-	tPkg = new Thread_Package;
-	if (!tPkg)
-	{
-		std::cout << "Memory allocation for thread_package failed\n";
-	}
-
-	tPkg->thread_terminated = false;
+	update_frequency = 1000;
 }
 
 Pipes_Server::~Pipes_Server()
 {
-	if (tPkg != NULL) delete tPkg;
+
 }
-
-
-//DWORD WINAPI InstanceThread2(LPVOID lpvParam)
-//{
-//
-//}
 
 DWORD WINAPI Pipes_Server::InstanceThread(LPVOID lpvParam)
 // This routine is a thread processing function to read from and reply to a client
@@ -58,9 +45,6 @@ DWORD WINAPI Pipes_Server::InstanceThread(LPVOID lpvParam)
 	DWORD cbBytesRead = 0, cbReplyBytes = 0, cbWritten = 0;
 	BOOL fSuccess = FALSE;
 	HANDLE hPipe = NULL;
-	//Thread_Package* tPkg;
-	
-	//tPkg = (Thread_Package*)lpvParam;
 
 	// Do some extra error checking since the app will keep running even if this
 	// thread fails.
@@ -132,12 +116,10 @@ DWORD WINAPI Pipes_Server::InstanceThread(LPVOID lpvParam)
 		//// Process the incoming message.
 		//GetAnswerToRequest(pchRequest, pchReply, &cbReplyBytes);
 
-		std::string str = broadcast_string;
-		
+		std::string str = broadcast_string; // Update the string with global broadcast_string
 
-		_tcscpy_s(pchReply, str.size() + 1, CA2T(str.c_str()));
-		//_tcscpy_s(pchReply, _countof(_T("hello my name is massimo")), _T("hello my name is massimo"));
-		cbReplyBytes = (lstrlen(pchReply) + 1) * sizeof(TCHAR);
+		_tcscpy_s(pchReply, str.size() + 1, CA2T(str.c_str()));	// Copy the string to Reply buffer
+		cbReplyBytes = (lstrlen(pchReply) + 1) * sizeof(TCHAR); // Get size of reply
 
 		// Write the reply to the pipe. 
 		fSuccess = WriteFile(
@@ -201,21 +183,8 @@ int Pipes_Server::launch_server()
 	fConnected = FALSE;
 	HANDLE hPipe = INVALID_HANDLE_VALUE, hThread = NULL;
 
-
-	//Thread_Package tPkg;
-	
-
 	for (;;)
 	{
-
-		//hPipe = CreateNamedPipe(TEXT("\\\\.\\pipe\\Foo"),
-		//	PIPE_ACCESS_DUPLEX,
-		//	PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,   // FILE_FLAG_FIRST_PIPE_INSTANCE is not needed but forces CreateNamedPipe(..) to fail if the pipe already exists...
-		//	1,
-		//	1024 * 16,
-		//	1024 * 16,
-		//	NMPWAIT_USE_DEFAULT_WAIT,
-		//	NULL);
 
 		_tprintf(TEXT("\nPipe Server: Main thread awaiting client connection on %s\n"), lpszPipename);
 		hPipe = CreateNamedPipe(
@@ -241,9 +210,6 @@ int Pipes_Server::launch_server()
 		std::cout << "Waiting for client connection..." << std::endl;
 		fConnected = ConnectNamedPipe(hPipe, NULL) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
 		std::cout << "connection found!" << std::endl;
-
-		//tPkg->hPipe = hPipe;
-		tPkg->pipe_broadcast_string = pipe_broadcast_string;
 		
 
 		if (fConnected)
@@ -270,7 +236,6 @@ int Pipes_Server::launch_server()
 			else CloseHandle(hThread);
 			
 			
-			
 			while (true) // update variable in a loop
 			{
 
@@ -280,7 +245,7 @@ int Pipes_Server::launch_server()
 				{
 					break;
 				}
-				Sleep(1000);
+				Sleep(update_frequency);
 			}
 
 

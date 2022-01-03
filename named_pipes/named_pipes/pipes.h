@@ -12,16 +12,6 @@
 
 #define BUFSIZE 1024//1024*16
 
-class Thread_Package
-{
-
-public:
-	HANDLE hPipe;
-	std::string pipe_broadcast_string;
-	std::atomic<bool> thread_terminated;
-
-};
-
 class Pipes_Server
 {
 	//std::mutex mu;
@@ -37,12 +27,12 @@ class Pipes_Server
 
 	
 	HANDLE hHeap;
-	Thread_Package* tPkg;
 
 
 public:
 
 	std::string pipe_broadcast_string;
+	int update_frequency;
 
 	static DWORD WINAPI InstanceThread(LPVOID lpvParam);
 	VOID GetAnswerToRequest(LPTSTR pchRequest, LPTSTR pchReply, LPDWORD pchBytes);
