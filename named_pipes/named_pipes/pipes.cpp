@@ -11,15 +11,15 @@
 //DWORD WINAPI InstanceThread(LPVOID);
 VOID GetAnswerToRequest(LPTSTR, LPTSTR, LPDWORD);
 std::string broadcast_string;
-std::atomic<int> broadcast_int;
 std::atomic<bool> thread_terminated;
 std::mutex m;
 
-Pipes_Server::Pipes_Server()
+Pipes_Server::Pipes_Server(std::string pipename)
 {
-	//pipe_broadcast_string = "init";
 	DWORD WINAPI InstanceThread(LPVOID lpvParam);
-	lpszPipename = TEXT("\\\\.\\pipe\\Foo");
+
+	//lpszPipename = TEXT("\\\\.\\pipe\\Foo");
+	lpszPipename = (LPCTSTR)pipename.c_str();
 	hPipe = INVALID_HANDLE_VALUE;
 	hThread = NULL;
 

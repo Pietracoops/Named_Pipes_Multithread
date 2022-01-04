@@ -37,7 +37,7 @@ public:
 	static DWORD WINAPI InstanceThread(LPVOID lpvParam);
 	VOID GetAnswerToRequest(LPTSTR pchRequest, LPTSTR pchReply, LPDWORD pchBytes);
 	int launch_server();
-	Pipes_Server();
+	Pipes_Server(std::string pipename = "\\\\.\\pipe\\Foo");
 	~Pipes_Server();
 
 

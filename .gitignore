@@ -31,12 +31,13 @@
 *.out
 *.app
 
-# Paths
-/named_pipes/.vs
-/named_pipes/Debug
-/named_pipes/named_pipes/Debug
+
 *.tlog
 *.lastbuildstate
 *.idb
 *.pdb
 *.log
+
+# Paths
+named_pipes/named_pipes/Debug/
+named_pipes/.vs/
