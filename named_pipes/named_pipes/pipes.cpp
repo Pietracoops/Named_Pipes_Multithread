@@ -11,6 +11,7 @@
 //DWORD WINAPI InstanceThread(LPVOID);
 VOID GetAnswerToRequest(LPTSTR, LPTSTR, LPDWORD);
 std::string broadcast_string;
+std::string* broadcast_string_ptr;
 std::atomic<bool> thread_terminated;
 std::mutex m;
 
@@ -18,17 +19,35 @@ Pipes_Server::Pipes_Server(std::string pipename)
 {
 	DWORD WINAPI InstanceThread(LPVOID lpvParam);
 
-	//lpszPipename = TEXT("\\\\.\\pipe\\Foo");
-	lpszPipename = (LPCTSTR)pipename.c_str();
+	lpszPipename = TEXT("\\\\.\\pipe\\Foo");
+	//lpszPipename = (LPCTSTR)pipename.c_str();
 	hPipe = INVALID_HANDLE_VALUE;
 	hThread = NULL;
 
 	update_frequency = 1000;
+	enable_log = false;
+
+	broadcast_string_ptr = &pipe_broadcast_string;
+
+	log_filename = "pipes_log.txt";
+
 }
 
 Pipes_Server::~Pipes_Server()
 {
+	delete broadcast_string_ptr;
 
+	if (enable_log)
+	{
+		fout.close();
+	}
+
+}
+
+void Pipes_Server::open_log()
+{
+	enable_log = true;
+	fout.open(log_filename);
 }
 
 DWORD WINAPI Pipes_Server::InstanceThread(LPVOID lpvParam)
@@ -116,8 +135,7 @@ DWORD WINAPI Pipes_Server::InstanceThread(LPVOID lpvParam)
 		//// Process the incoming message.
 		//GetAnswerToRequest(pchRequest, pchReply, &cbReplyBytes);
 
-		std::string str = broadcast_string; // Update the string with global broadcast_string
-
+		std::string str = *broadcast_string_ptr; // Update the string with global broadcast_string
 		_tcscpy_s(pchReply, str.size() + 1, CA2T(str.c_str()));	// Copy the string to Reply buffer
 		cbReplyBytes = (lstrlen(pchReply) + 1) * sizeof(TCHAR); // Get size of reply
 
@@ -134,6 +152,7 @@ DWORD WINAPI Pipes_Server::InstanceThread(LPVOID lpvParam)
 			_tprintf(TEXT("InstanceThread WriteFile failed, GLE=%d.\n"), GetLastError());
 			break;
 		}
+		Sleep(150);
 	}
 
 	// Flush the pipe to allow the client to read the pipe's contents 
@@ -179,6 +198,12 @@ VOID Pipes_Server::GetAnswerToRequest(LPTSTR pchRequest,
 
 int Pipes_Server::launch_server()
 {
+
+	if (enable_log)
+	{
+		fout << "Launching Server..." << std::endl;
+	}
+
 	std::cout << "Launching Server..." << std::endl;
 	fConnected = FALSE;
 	HANDLE hPipe = INVALID_HANDLE_VALUE, hThread = NULL;
@@ -202,9 +227,19 @@ int Pipes_Server::launch_server()
 
 		if (hPipe == INVALID_HANDLE_VALUE)
 		{
+			if (enable_log)
+			{
+				fout << "CreateNamedPipe failed, GLE=" << GetLastError() << std::endl;
+			}
+
 			_tprintf(TEXT("CreateNamedPipe failed, GLE=%d.\n"), GetLastError());
 			//std::cout << "CreateNamedPipe failed, GLE=" << GetLastError() << std::endl;
 			return -1;
+		}
+
+		if (enable_log)
+		{
+			fout << "Waiting for client connection..." << std::endl;
 		}
 
 		std::cout << "Waiting for client connection..." << std::endl;
@@ -214,6 +249,11 @@ int Pipes_Server::launch_server()
 
 		if (fConnected)
 		{
+			if (enable_log)
+			{
+				fout << "connection found!" << std::endl;
+			}
+
 			printf("Client connected, creating a processing thread.\n");
 			//std::cout << "Client connected, creating a processing thread." << std::endl;
 
@@ -236,17 +276,17 @@ int Pipes_Server::launch_server()
 			else CloseHandle(hThread);
 			
 			
-			while (true) // update variable in a loop
-			{
-
-				broadcast_string = pipe_broadcast_string;
-			
-				if (thread_terminated.load()) // check if thread is still alive
-				{
-					break;
-				}
-				Sleep(update_frequency);
-			}
+			//while (true) // update variable in a loop
+			//{
+			//
+			//	broadcast_string = pipe_broadcast_string; // using pointer to update quicker this is now deprecated
+			//
+			//	if (thread_terminated.load()) // check if thread is still alive
+			//	{
+			//		break;
+			//	}
+			//	Sleep(update_frequency);
+			//}
 
 
 		}

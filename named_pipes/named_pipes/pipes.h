@@ -9,6 +9,7 @@
 #include <string>
 #include <atomic>
 #include <mutex>
+#include <fstream>
 
 #define BUFSIZE 1024//1024*16
 
@@ -25,8 +26,11 @@ class Pipes_Server
 
 	HANDLE hThread;
 
-	
+	std::ofstream fout;
 	HANDLE hHeap;
+
+	std::string log_filename;
+	bool enable_log;
 
 
 public:
@@ -37,6 +41,7 @@ public:
 	static DWORD WINAPI InstanceThread(LPVOID lpvParam);
 	VOID GetAnswerToRequest(LPTSTR pchRequest, LPTSTR pchReply, LPDWORD pchBytes);
 	int launch_server();
+	void open_log();
 	Pipes_Server(std::string pipename = "\\\\.\\pipe\\Foo");
 	~Pipes_Server();
 
